@@ -8,6 +8,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
@@ -25,50 +27,68 @@ public class NasaService {
     }
 
     public Map<String, Object> getApod(String date) {
-        var uri = buildUri("/planetary/apod", Map.of("api_key", properties.key(), "date", date));
-        return fetch(uri);
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("api_key", properties.key());
+        if (date != null && !date.isBlank()) {
+            params.put("date", date);
+        }
+        return fetchFromNasa("/planetary/apod", params);
     }
 
     public Map<String, Object> getMarsRover(String sol, String camera) {
-        var uri = buildUri("/mars-photos/api/v1/rovers/curiosity/photos",
-                Map.of("api_key", properties.key(), "sol", sol, "camera", camera));
-        return fetch(uri);
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("api_key", properties.key());
+        if (sol != null && !sol.isBlank()) {
+            params.put("sol", sol);
+        }
+        if (camera != null && !camera.isBlank()) {
+            params.put("camera", camera);
+        }
+        return fetchFromNasa("/mars-photos/api/v1/rovers/curiosity/photos", params);
     }
 
     public Map<String, Object> getNeoFeed(String startDate, String endDate) {
-        var uri = buildUri("/neo/rest/v1/feed",
-                Map.of("api_key", properties.key(), "start_date", startDate, "end_date", endDate));
-        return fetch(uri);
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("api_key", properties.key());
+        if (startDate != null && !startDate.isBlank()) {
+            params.put("start_date", startDate);
+        }
+        if (endDate != null && !endDate.isBlank()) {
+            params.put("end_date", endDate);
+        }
+        return fetchFromNasa("/neo/rest/v1/feed", params);
     }
 
-    private String buildUri(String path, Map<String, String> params) {
-        var builder = UriComponentsBuilder.fromPath(path);
+    private Map<String, Object> fetchFromNasa(String endpoint, Map<String, String> params) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(properties.baseUrl())
+                .path(endpoint);
+
         params.forEach((key, value) -> {
             if (value != null && !value.isBlank()) {
                 builder.queryParam(key, value);
             }
         });
-        return builder.toUriString();
-    }
 
-    private Map<String, Object> fetch(String uri) {
+        String uri = builder.build().toUriString();
+
         try {
             return restClient.get()
                     .uri(uri)
                     .retrieve()
-                    .body(new ParameterizedTypeReference<>() {});
+                    .body(new ParameterizedTypeReference<>() {
+                    });
         } catch (HttpClientErrorException ex) {
-            return Map.of(
-                    "error", true,
-                    "status", ex.getStatusCode().value(),
-                    "message", ex.getResponseBodyAsString()
-            );
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", true);
+            error.put("status", ex.getStatusCode().value());
+            error.put("message", ex.getResponseBodyAsString() != null ? ex.getResponseBodyAsString() : "NASA API error");
+            return error;
         } catch (Exception ex) {
-            return Map.of(
-                    "error", true,
-                    "status", HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    "message", ex.getMessage()
-            );
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", true);
+            error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            error.put("message", ex.getMessage());
+            return error;
         }
     }
 }
