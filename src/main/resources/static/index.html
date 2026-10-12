@@ -4,95 +4,118 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NASA Space Explorer</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
-    <header class="hero">
+    <!-- Navigation -->
+    <nav class="navbar">
         <div class="container">
-            <p class="eyebrow">Mission Control</p>
-            <h1>NASA Space Explorer</h1>
-            <p class="subtitle">Discover cosmic imagery, Mars data, and near-earth objects from the NASA API.</p>
+            <div class="navbar-brand">
+                <i class="fas fa-rocket"></i>
+                <span>NASA Explorer</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#apod" class="nav-link">APOD</a></li>
+                <li><a href="#mars" class="nav-link">Mars</a></li>
+                <li><a href="#neo" class="nav-link">Asteroids</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="hero-content">
+            <div class="stars"></div>
+            <h1>Explore the Universe</h1>
+            <p>Discover cosmic imagery, Mars data, and near-earth objects from NASA</p>
         </div>
     </header>
 
     <main class="container">
-        <section class="panel">
-            <h2>Today's Astronomy Picture</h2>
-            <div id="apodCard" class="card">
-                <div class="loader">Loading...</div>
+        <!-- APOD Section -->
+        <section id="apod" class="section">
+            <div class="section-header">
+                <h2><i class="fas fa-image"></i> Astronomy Picture of the Day</h2>
+                <p class="section-subtitle">A stunning cosmic image updated daily</p>
+            </div>
+            <div class="content-grid single-column">
+                <div class="card apod-card" id="apodCard">
+                    <div class="loader">
+                        <div class="spinner"></div>
+                        <p>Loading cosmic imagery...</p>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <section class="panel split">
-            <div>
-                <h2>Mars Rover Photos</h2>
-                <div id="marsCard" class="card">
-                    <div class="loader">Loading...</div>
+        <!-- Mars Rover Section -->
+        <section id="mars" class="section">
+            <div class="section-header">
+                <h2><i class="fas fa-compass"></i> Mars Rover Photography</h2>
+                <p class="section-subtitle">Real images from the surface of Mars</p>
+            </div>
+            <div class="filter-controls">
+                <div class="input-group">
+                    <label for="solInput">Sol (Martian Day):</label>
+                    <input type="number" id="solInput" value="1000" min="0" />
+                </div>
+                <div class="input-group">
+                    <label for="cameraSelect">Camera:</label>
+                    <select id="cameraSelect">
+                        <option value="fhaz">Front Hazard Avoidance Camera</option>
+                        <option value="rhaz">Rear Hazard Avoidance Camera</option>
+                        <option value="mast">Mast Camera</option>
+                        <option value="navcam">Navigation Camera</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" id="marsBtn"><i class="fas fa-search"></i> Search</button>
+            </div>
+            <div class="content-grid" id="marsGrid">
+                <div class="card" style="grid-column: 1/-1;">
+                    <div class="loader">
+                        <div class="spinner"></div>
+                        <p>Loading Mars data...</p>
+                    </div>
                 </div>
             </div>
-            <div>
-                <h2>Near Earth Objects</h2>
-                <div id="neoCard" class="card">
-                    <div class="loader">Loading...</div>
+        </section>
+
+        <!-- NEO Section -->
+        <section id="neo" class="section">
+            <div class="section-header">
+                <h2><i class="fas fa-meteor"></i> Near Earth Objects</h2>
+                <p class="section-subtitle">Track asteroids and comets near Earth</p>
+            </div>
+            <div class="filter-controls">
+                <div class="input-group">
+                    <label for="startDateInput">Start Date:</label>
+                    <input type="date" id="startDateInput" value="2024-01-01" />
+                </div>
+                <div class="input-group">
+                    <label for="endDateInput">End Date:</label>
+                    <input type="date" id="endDateInput" value="2024-01-07" />
+                </div>
+                <button class="btn btn-primary" id="neoBtn"><i class="fas fa-search"></i> Search</button>
+            </div>
+            <div class="content-grid" id="neoGrid">
+                <div class="card" style="grid-column: 1/-1;">
+                    <div class="loader">
+                        <div class="spinner"></div>
+                        <p>Loading asteroid data...</p>
+                    </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <script>
-        async function loadData() {
-            try {
-                const apodRes = await fetch('/api/space/apod');
-                const apod = await apodRes.json();
-                const apodHtml = `
-                    <img src="${apod.url}" alt="${apod.title || 'Astronomy image'}" />
-                    <div class="content">
-                        <h3>${apod.title || 'Astronomy Picture of the Day'}</h3>
-                        <p class="meta">${apod.date || ''}</p>
-                        <p>${apod.explanation || 'No description available.'}</p>
-                    </div>
-                `;
-                document.getElementById('apodCard').innerHTML = apodHtml;
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 NASA Space Explorer. Powered by <a href="https://api.nasa.gov" target="_blank">NASA API</a></p>
+        </div>
+    </footer>
 
-                const marsRes = await fetch('/api/space/mars-rover?sol=1000&camera=fhaz');
-                const mars = await marsRes.json();
-                const photos = mars.photos || [];
-                const firstPhoto = photos[0];
-                const marsHtml = firstPhoto
-                    ? `
-                        <img src="${firstPhoto.img_src}" alt="Mars rover photo" />
-                        <div class="content">
-                            <h3>${firstPhoto.camera.full_name}</h3>
-                            <p class="meta">Sol ${firstPhoto.sol} • ${firstPhoto.earth_date}</p>
-                            <p>Rover: ${firstPhoto.rover.name}</p>
-                        </div>
-                    `
-                    : '<p>No Mars rover data available.</p>';
-                document.getElementById('marsCard').innerHTML = marsHtml;
-
-                const neoRes = await fetch('/api/space/neo?start_date=2024-01-01&end_date=2024-01-07');
-                const neo = await neoRes.json();
-                const asteroids = neo.near_earth_objects ? Object.values(neo.near_earth_objects).flat() : [];
-                const topAsteroid = asteroids[0];
-                const neoHtml = topAsteroid
-                    ? `
-                        <div class="content">
-                            <h3>${topAsteroid.name}</h3>
-                            <p class="meta">Estimated diameter: ${topAsteroid.estimated_diameter.meters.estimated_diameter_max.toFixed(1)} m</p>
-                            <p>Closest approach: ${topAsteroid.close_approach_data[0]?.close_approach_date_full || 'N/A'}</p>
-                            <p>Hazardous: ${topAsteroid.is_potentially_hazardous_asteroid ? 'Yes' : 'No'}</p>
-                        </div>
-                    `
-                    : '<p>No asteroid data available.</p>';
-                document.getElementById('neoCard').innerHTML = neoHtml;
-            } catch (error) {
-                document.getElementById('apodCard').innerHTML = '<p>Unable to load NASA data. Check your API key.</p>';
-                document.getElementById('marsCard').innerHTML = '<p>Unable to load Mars data.</p>';
-                document.getElementById('neoCard').innerHTML = '<p>Unable to load asteroid data.</p>';
-            }
-        }
-
-        loadData();
-    </script>
+    <script src="/js/app.js"></script>
 </body>
 </html>
